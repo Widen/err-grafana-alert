@@ -1,0 +1,13 @@
+[Core]
+name = err-grafana-alert
+module = err-grafana-alert
+
+[Documentation]
+description = Accepts Grafana webhook calls and posts alert messages in the chat
+
+[Python]
+version = 3
+
+[Errbot]
+min = 5.0.0
+
