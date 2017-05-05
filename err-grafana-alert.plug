@@ -1,5 +1,5 @@
 [Core]
-name = err-grafana-alert
+name = GrafanaAlert
 module = err-grafana-alert
 
 [Documentation]
