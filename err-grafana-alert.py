@@ -1,7 +1,7 @@
 from errbot import BotPlugin, botcmd, arg_botcmd, webhook
 
 
-class Err-grafana-alert(BotPlugin):
+class ErrGrafanaAlert(BotPlugin):
     """
     Accepts Grafana webhook calls and posts alert messages in the chat
     """
@@ -12,7 +12,7 @@ class Err-grafana-alert(BotPlugin):
 
         You should delete it if you're not using it to override any default behaviour
         """
-        super(Err-grafana-alert, self).activate()
+        super(ErrGrafanaAlert, self).activate()
 
     def deactivate(self):
         """
@@ -20,7 +20,7 @@ class Err-grafana-alert(BotPlugin):
 
         You should delete it if you're not using it to override any default behaviour
         """
-        super(Err-grafana-alert, self).deactivate()
+        super(ErrGrafanaAlert, self).deactivate()
 
     def get_configuration_template(self):
         """
@@ -40,7 +40,7 @@ class Err-grafana-alert(BotPlugin):
 
         You should delete it if you're not using it to override any default behaviour
         """
-        super(Err-grafana-alert, self).check_configuration(configuration)
+        super(ErrGrafanaAlert, self).check_configuration(configuration)
 
     def callback_connect(self):
         """
