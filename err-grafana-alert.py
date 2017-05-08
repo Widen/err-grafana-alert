@@ -39,6 +39,13 @@ class ErrGrafanaAlert(BotPlugin):
         """
         return {
                 'TOKEN_LENGTH': 48,
+                'COLORS': {
+                    'ok': 'green',
+                    'paused': 'blue',
+                    'alerting': 'red',
+                    'pending': 'orange',
+                    'no_data': 'red',
+                    }
                 }
 
     def check_configuration(self, configuration):
@@ -62,10 +69,22 @@ class ErrGrafanaAlert(BotPlugin):
             self.log.exception()
             bottle.abort(403, "Forbidden")
 
-        self.send(
-                self.build_identifier(instance['room']),
-                'bla bla alerting',
-                )
+        if request.content_type == 'application/json':
+            # received a json request
+            self.send_card(
+                    self.build_identifier(instance['room']),
+                    title="[Grafana {name}] [{state}] {title}".format(name=instance['name'], state=request.json['state'], title=request.json['title']),
+                    body=request.json['message'],
+                    image=request.json['imageUrl'] if instance['show_images'] is True else None,
+                    link=request.json['ruleUrl'],
+                    color=self.config['COLORS'].get(request.json['state'], 'red')
+                    )
+
+        else:
+            self.send(
+                    self.build_identifier(instance['room']),
+                    'Received unknown alert from Grafana {name}'.format(name=instance['name']),
+                    )
 
         return 'OK'
 
