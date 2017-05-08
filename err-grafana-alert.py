@@ -51,11 +51,6 @@ class ErrGrafanaAlert(BotPlugin):
         """
         super(ErrGrafanaAlert, self).check_configuration(configuration)
 
-    @webhook
-    def example_webhook(self, incoming_request):
-        """A webhook which simply returns 'Example'"""
-        return "Example"
-
     @webhook('/grafana/<token>/alert', raw=True)
     def alert_webhook(self, request, token):
 
@@ -103,7 +98,7 @@ class ErrGrafanaAlert(BotPlugin):
                 "Registered Grafana instance {name} for {room}".format(name=name, room=instance['room']),
                 )
 
-        yield "Successfully registered Grafana instance"
+        yield "Successfully registered Grafana instance {name} for {room}".format(name=name, room=instance['room'])
         yield "Please config Grafana to call following webhook: {server}/grafana/{token}/alert".format(server='', token=instance['token'])
 
     @botcmd
@@ -112,6 +107,52 @@ class ErrGrafanaAlert(BotPlugin):
 
         for name, instance in self['INSTANCES'].items():
             yield "{name} in {room} -> {token}".format(**instance)
+
+    @arg_botcmd('name', type=str, help='name of the Grafana instance')
+    @arg_botcmd('--url', type=str, default=None, help='Optional URL to the Grafana instance. Used for additional security check')
+    @arg_botcmd('--show-images', type=bool, default=True)
+    def grafana_update(self, mess, name, url=None, show_images=None):
+
+        if not name:
+            return "You need to specify a name of the Grafana instance you want to update."
+        elif name not in self['INSTANCES']:
+            return "{name} does not exists as Grafana instance".format(name=name)
+
+        instance = self['INSTANCES'][name]
+        if url:
+            instance['url'] = url
+        if show_images is not None:
+            instance['show_images'] = show_images
+
+        with self.mutable('INSTANCES') as instances:
+            instances[name] = instance
+
+        self.send(
+                self.build_identifier(instance['room']),
+                "Successfully update Grafana instance {name}".format(name=name),
+                )
+
+        return "Updated Grafana instance {name} for {room}".format(name=name, room=instance['room'])
+        pass
+
+    @arg_botcmd('name', type=str, help='name of the Grafana instance')
+    def grafana_delete(self, mess, name):
+
+        if not name:
+            return "You need to specify a name of the Grafana instance you want to update."
+        elif name not in self['INSTANCES']:
+            return "{name} does not exists as Grafana instance".format(name=name)
+
+        with self.mutable('INSTANCES') as instances:
+            room = instances[name]['room']
+            del instances[name]
+
+        self.send(
+            self.build_identifier(room),
+            "Successfully deleted Grafana instance {name}".format(name=name),
+            )
+
+        return "Deleted Grafana instance {name} for {room}".format(name=name, room=room)
 
     def _generate_token(self, length=None):
         if not length:
@@ -131,3 +172,5 @@ class ErrGrafanaAlert(BotPlugin):
                 return instance
 
         raise KeyError("No Grafana instance found with this token {token}".format(token=token))
+
+
