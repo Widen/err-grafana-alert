@@ -72,7 +72,7 @@ class ErrGrafanaAlert(BotPlugin):
         if request.content_type == 'application/json':
             # received a json request
             self.send_card(
-                    self.build_identifier(instance['room']),
+                    to=self.build_identifier(instance['room']),
                     title="[Grafana {name}] [{state}] {title}".format(name=instance['name'], state=request.json['state'], title=request.json['title']),
                     body=request.json['message'],
                     image=request.json['imageUrl'] if instance['show_images'] is True else None,
@@ -191,5 +191,3 @@ class ErrGrafanaAlert(BotPlugin):
                 return instance
 
         raise KeyError("No Grafana instance found with this token {token}".format(token=token))
-
-
