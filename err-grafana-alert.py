@@ -88,10 +88,11 @@ class ErrGrafanaAlert(BotPlugin):
                         )
 
             return 'OK'
-        except Exception as e:
+
+        except Exception:
             # something went wrong
+            self.log.exception("Exception while processing alert request with message: {}".format(request.json))
             bottle.abort(500, "Internal Error.")
-            self.log.exception("Exception while processing alert request with message: {}".format(request.json)
 
     @arg_botcmd('name', type=str, help='name of the Grafana instance')
     @arg_botcmd('--url', type=str, default=None, help='Optional URL to the Grafana instance. Used for additional security check')
