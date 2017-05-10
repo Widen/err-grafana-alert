@@ -74,7 +74,7 @@ class ErrGrafanaAlert(BotPlugin):
                 # received a json request
                 self.send_card(
                         to=self.build_identifier(instance['room']),
-                        title="[Grafana {name}] [{state}] {title}".format(name=instance['name'], state=request.json.get('state', 'unknown'), title=request.json.get('title', None)),
+                        title="[Grafana {name}] {title}".format(name=instance['name'], title=request.json.get('title', request.json.get('state', 'unknown'))),
                         body=request.json.get('message', None),
                         image=request.json.get('imageUrl', None) if instance['show_images'] is True else None,
                         link=request.json.get('ruleUrl', None),
