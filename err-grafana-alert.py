@@ -89,7 +89,7 @@ class ErrGrafanaAlert(BotPlugin):
 
             return 'OK'
 
-        except Exception:
+        except:
             # something went wrong
             self.log.exception("Exception while processing alert request with message: {}".format(request.json))
             bottle.abort(500, "Internal Error.")
