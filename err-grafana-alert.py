@@ -69,24 +69,29 @@ class ErrGrafanaAlert(BotPlugin):
             self.log.exception()
             bottle.abort(403, "Forbidden")
 
-        if request.content_type == 'application/json':
-            # received a json request
-            self.send_card(
-                    to=self.build_identifier(instance['room']),
-                    title="[Grafana {name}] [{state}] {title}".format(name=instance['name'], state=request.json['state'], title=request.json['title']),
-                    body=request.json['message'],
-                    image=request.json['imageUrl'] if instance['show_images'] is True else None,
-                    link=request.json['ruleUrl'],
-                    color=self.config['COLORS'].get(request.json['state'], 'red')
-                    )
+        try:
+            if request.content_type == 'application/json':
+                # received a json request
+                self.send_card(
+                        to=self.build_identifier(instance['room']),
+                        title="[Grafana {name}] [{state}] {title}".format(name=instance['name'], state=request.json['state'], title=request.json['title']),
+                        body=request.json['message'],
+                        image=request.json['imageUrl'] if instance['show_images'] is True else None,
+                        link=request.json['ruleUrl'],
+                        color=self.config['COLORS'].get(request.json['state'], 'red')
+                        )
 
-        else:
-            self.send(
-                    self.build_identifier(instance['room']),
-                    'Received unknown alert from Grafana {name}'.format(name=instance['name']),
-                    )
+            else:
+                self.send(
+                        self.build_identifier(instance['room']),
+                        'Received unknown alert from Grafana {name}'.format(name=instance['name']),
+                        )
 
-        return 'OK'
+            return 'OK'
+        except Exception as e:
+            # something went wrong
+            bottle.abort(500, "Internal Error.")
+            self.log.exception("Exception while processing alert request with message: {}".format(request.json)
 
     @arg_botcmd('name', type=str, help='name of the Grafana instance')
     @arg_botcmd('--url', type=str, default=None, help='Optional URL to the Grafana instance. Used for additional security check')
