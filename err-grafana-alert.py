@@ -74,11 +74,11 @@ class ErrGrafanaAlert(BotPlugin):
                 # received a json request
                 self.send_card(
                         to=self.build_identifier(instance['room']),
-                        title="[Grafana {name}] [{state}] {title}".format(name=instance['name'], state=request.json['state'], title=request.json['title']),
-                        body=request.json['message'],
-                        image=request.json['imageUrl'] if instance['show_images'] is True else None,
-                        link=request.json['ruleUrl'],
-                        color=self.config['COLORS'].get(request.json['state'], 'red')
+                        title="[Grafana {name}] [{state}] {title}".format(name=instance['name'], state=request.json.get('state', 'unknown'), title=request.json.get('title', None)),
+                        body=request.json.get('message', None),
+                        image=request.json.get('imageUrl', None) if instance['show_images'] is True else None,
+                        link=request.json.get('ruleUrl', None),
+                        color=self.config['COLORS'].get(request.json.get('state', 'alerting'), 'red')
                         )
 
             else:
