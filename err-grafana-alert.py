@@ -124,7 +124,7 @@ class ErrGrafanaAlert(BotPlugin):
                 "Registered Grafana instance {name} for {room}".format(name=name, room=instance['room']),
                 )
 
-        yield "Successfully registered Grafana instance {name} for {room}".format(name=name, room=instance['room'])
+        yield "Successfully registered Grafana instance {name} for `{room}`. Regex replacement: {find} --> {replace}".format(name=name, room=instance['room'], find=link_regex_find, replace=link_regex_replace)
         yield "Please config Grafana to call following webhook: {server}/grafana/{token}/alert".format(server='', token=instance['token'])
 
     @botcmd
