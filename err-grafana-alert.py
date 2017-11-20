@@ -1,12 +1,10 @@
 import random
+
 import bottle
-
-
 from errbot import BotPlugin, botcmd, arg_botcmd, webhook
 
 
 class ErrGrafanaAlert(BotPlugin):
-
     """
     Accepts Grafana webhook calls and posts alert messages in the chat
     """
@@ -35,15 +33,15 @@ class ErrGrafanaAlert(BotPlugin):
         """
 
         return {
-                'TOKEN_LENGTH': 48,
-                'COLORS': {
-                    'ok': 'green',
-                    'paused': 'blue',
-                    'alerting': 'red',
-                    'pending': 'orange',
-                    'no_data': 'red',
-                    }
-                }
+            'TOKEN_LENGTH': 48,
+            'COLORS': {
+                'ok': 'green',
+                'paused': 'blue',
+                'alerting': 'red',
+                'pending': 'orange',
+                'no_data': 'red',
+            }
+        }
 
     def check_configuration(self, configuration):
         """
@@ -51,7 +49,7 @@ class ErrGrafanaAlert(BotPlugin):
 
         Raise a errbot.utils.ValidationException in case of an error
         """
-        
+
         super(ErrGrafanaAlert, self).check_configuration(configuration)
 
     @webhook('/grafana/<token>/alert', raw=True)
@@ -73,19 +71,19 @@ class ErrGrafanaAlert(BotPlugin):
                     link = link.replace(instance['link_regex_find'], instance['link_regex_replace'])
 
                 self.send_card(
-                        to=self.build_identifier(instance['room']),
-                        title="[{name}] {title}".format(name=instance['name'], title=request.json.get('title', request.json.get('state', 'unknown'))),
-                        body=request.json.get('message', None),
-                        image=request.json.get('imageUrl', None) if instance['show_images'] is True else None,
-                        link=link,
-                        color=self.config['COLORS'].get(request.json.get('state', 'alerting'), 'red')
-                        )
+                    to=self.build_identifier(instance['room']),
+                    title="[{name}] {title}".format(name=instance['name'], title=request.json.get('title', request.json.get('state', 'unknown'))),
+                    body=request.json.get('message', None),
+                    image=request.json.get('imageUrl', None) if instance['show_images'] is True else None,
+                    link=link,
+                    color=self.config['COLORS'].get(request.json.get('state', 'alerting'), 'red')
+                )
 
             else:
                 self.send(
-                        self.build_identifier(instance['room']),
-                        'Received unknown alert from Grafana {name}'.format(name=instance['name']),
-                        )
+                    self.build_identifier(instance['room']),
+                    'Received unknown alert from Grafana {name}'.format(name=instance['name']),
+                )
 
             return 'OK'
 
@@ -107,24 +105,26 @@ class ErrGrafanaAlert(BotPlugin):
             return "{name} already exists as Grafana instance.".format(name=name)
 
         instance = {
-                'name': name,
-                'token': self._generate_token(),
-                'show_images': True if show_images is True else False,
-                'room': room if room else str(mess.to),
-                'link_regex_find': link_regex_find,
-                'link_regex_replace': link_regex_replace
-                }
+            'name': name,
+            'token': self._generate_token(),
+            'show_images': True if show_images is True else False,
+            'room': room if room else str(mess.to),
+            'link_regex_find': link_regex_find,
+            'link_regex_replace': link_regex_replace
+        }
 
         with self.mutable('INSTANCES') as instances:
             instances[name] = instance
 
         # send registration notification to target room
         self.send(
-                self.build_identifier(instance['room']),
-                "Registered Grafana instance {name} for {room}".format(name=name, room=instance['room']),
-                )
+            self.build_identifier(instance['room']),
+            "Registered Grafana instance {name} for {room}".format(name=name, room=instance['room']),
+        )
 
-        yield "Successfully registered Grafana instance {name} for `{room}`. Regex replacement: {find} --> {replace}".format(name=name, room=instance['room'], find=link_regex_find, replace=link_regex_replace)
+        yield "Successfully registered Grafana instance {name} for `{room}`. Regex replacement: {find} --> {replace}".format(name=name, room=instance['room'],
+                                                                                                                             find=link_regex_find,
+                                                                                                                             replace=link_regex_replace)
         yield "Please config Grafana to call following webhook: {server}/grafana/{token}/alert".format(server='', token=instance['token'])
 
     @botcmd
@@ -133,6 +133,7 @@ class ErrGrafanaAlert(BotPlugin):
         List instances
         """
 
+        yield "here..."
         yield "{count} Grafana instances found".format(count=len(self['INSTANCES']))
 
         for name, instance in self['INSTANCES'].items():
@@ -153,7 +154,7 @@ class ErrGrafanaAlert(BotPlugin):
         self.send(
             self.build_identifier(room),
             "Successfully deleted Grafana instance {name}".format(name=name),
-            )
+        )
 
         return "Deleted Grafana instance {name} for {room}".format(name=name, room=room)
 
@@ -166,12 +167,11 @@ class ErrGrafanaAlert(BotPlugin):
         rand = random.SystemRandom()
         token = []
         for i in range(0, length):
-            token.append(_TOKEN_ALPHABET[rand.randint(0, len(_TOKEN_ALPHABET)-1)])
+            token.append(_TOKEN_ALPHABET[rand.randint(0, len(_TOKEN_ALPHABET) - 1)])
 
         return ''.join(token)
 
     def _find_instance_by_token(self, token):
-        yield "Listing instances..."
         for name, instance in self['INSTANCES'].items():
             if instance['token'] == token:
                 return instance
