@@ -15,6 +15,7 @@ class ErrGrafanaAlert(BotPlugin):
         """
         Triggers on plugin activation
         """
+
         super(ErrGrafanaAlert, self).activate()
 
         if 'INSTANCES' not in self:
@@ -25,12 +26,14 @@ class ErrGrafanaAlert(BotPlugin):
         """
         Triggers on plugin deactivation
         """
+
         super(ErrGrafanaAlert, self).deactivate()
 
     def get_configuration_template(self):
         """
         Defines the configuration structure this plugin supports
         """
+
         return {
                 'TOKEN_LENGTH': 48,
                 'COLORS': {
@@ -48,6 +51,7 @@ class ErrGrafanaAlert(BotPlugin):
 
         Raise a errbot.utils.ValidationException in case of an error
         """
+        
         super(ErrGrafanaAlert, self).check_configuration(configuration)
 
     @webhook('/grafana/<token>/alert', raw=True)
@@ -128,12 +132,13 @@ class ErrGrafanaAlert(BotPlugin):
         """
         List instances
         """
+
         yield "{count} Grafana instances found".format(count=len(self['INSTANCES']))
 
         for name, instance in self['INSTANCES'].items():
             yield "{name} in {room} -> {token}".format(**instance)
 
-    @arg_botcmd('name', type=str, help='name of the Grafana instance')
+    @arg_botcmd('name', type=str, help='name of the Grafana instance -- xxx')
     def grafana_delete(self, mess, name):
 
         if not name:
@@ -166,7 +171,7 @@ class ErrGrafanaAlert(BotPlugin):
         return ''.join(token)
 
     def _find_instance_by_token(self, token):
-
+        yield "Listing instances..."
         for name, instance in self['INSTANCES'].items():
             if instance['token'] == token:
                 return instance
