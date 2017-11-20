@@ -70,6 +70,8 @@ class ErrGrafanaAlert(BotPlugin):
                 if instance['link_regex_find']:
                     link = link.replace(instance['link_regex_find'], instance['link_regex_replace'])
 
+                yield "webhook img URL {url}".format(url=request.json.get('imageUrl', None))
+
                 self.send_card(
                     to=self.build_identifier(instance['room']),
                     title="[{name}] {title}".format(name=instance['name'], title=request.json.get('title', request.json.get('state', 'unknown'))),
@@ -122,10 +124,8 @@ class ErrGrafanaAlert(BotPlugin):
             "Registered Grafana instance {name} for {room}".format(name=name, room=instance['room']),
         )
 
-        yield "Successfully registered Grafana instance {name} for `{room}`. Regex replacement: {find} --> {replace}".format(name=name, room=instance['room'],
-                                                                                                                             find=link_regex_find,
-                                                                                                                             replace=link_regex_replace)
-        yield "Please config Grafana to call following webhook: {server}/grafana/{token}/alert".format(server='', token=instance['token'])
+        yield "Successfully registered Grafana instance {name} for `{room}`. Regex replacement: {find} --> {replace}".format(name=name, room=instance['room'], find=link_regex_find, replace=link_regex_replace)
+        yield "Please config Grafana to call following webhook: {server}/grafana/{token}/alert".format(server='http://your-errbot', token=instance['token'])
 
     @botcmd
     def grafana_list(self, mess, args):
@@ -133,7 +133,6 @@ class ErrGrafanaAlert(BotPlugin):
         List instances
         """
 
-        yield "here..."
         yield "{count} Grafana instances found".format(count=len(self['INSTANCES']))
 
         for name, instance in self['INSTANCES'].items():
