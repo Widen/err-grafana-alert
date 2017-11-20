@@ -6,16 +6,14 @@ from errbot import BotPlugin, botcmd, arg_botcmd, webhook
 
 
 class ErrGrafanaAlert(BotPlugin):
+
     """
     Accepts Grafana webhook calls and posts alert messages in the chat
     """
-    _TOKEN_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
     def activate(self):
         """
         Triggers on plugin activation
-
-        You should delete it if you're not using it to override any default behaviour
         """
         super(ErrGrafanaAlert, self).activate()
 
@@ -26,16 +24,12 @@ class ErrGrafanaAlert(BotPlugin):
     def deactivate(self):
         """
         Triggers on plugin deactivation
-
-        You should delete it if you're not using it to override any default behaviour
         """
         super(ErrGrafanaAlert, self).deactivate()
 
     def get_configuration_template(self):
         """
         Defines the configuration structure this plugin supports
-
-        You should delete it if your plugin doesn't use any configuration like this
         """
         return {
                 'TOKEN_LENGTH': 48,
@@ -53,8 +47,6 @@ class ErrGrafanaAlert(BotPlugin):
         Triggers when the configuration is checked, shortly before activation
 
         Raise a errbot.utils.ValidationException in case of an error
-
-        You should delete it if you're not using it to override any default behaviour
         """
         super(ErrGrafanaAlert, self).check_configuration(configuration)
 
@@ -68,16 +60,20 @@ class ErrGrafanaAlert(BotPlugin):
         except KeyError:
             self.log.exception()
             bottle.abort(403, "Forbidden")
+            return
 
         try:
             if request.content_type == 'application/json':
-                # received a json request
+                link = request.json.get('ruleUrl', None)
+                if instance['link_regex_find']:
+                    link = link.replace(instance['link_regex_find'], instance['link_regex_replace'])
+
                 self.send_card(
                         to=self.build_identifier(instance['room']),
-                        title="[Grafana {name}] {title}".format(name=instance['name'], title=request.json.get('title', request.json.get('state', 'unknown'))),
+                        title="[{name}] {title}".format(name=instance['name'], title=request.json.get('title', request.json.get('state', 'unknown'))),
                         body=request.json.get('message', None),
                         image=request.json.get('imageUrl', None) if instance['show_images'] is True else None,
-                        link=request.json.get('ruleUrl', None),
+                        link=link,
                         color=self.config['COLORS'].get(request.json.get('state', 'alerting'), 'red')
                         )
 
@@ -90,18 +86,18 @@ class ErrGrafanaAlert(BotPlugin):
             return 'OK'
 
         except:
-            # something went wrong
             self.log.exception("Exception while processing alert request with message: {}".format(request.json))
             bottle.abort(500, "Internal Error.")
 
-    @arg_botcmd('name', type=str, help='name of the Grafana instance')
-    @arg_botcmd('--url', type=str, default=None, help='Optional URL to the Grafana instance. Used for additional security check')
+    @arg_botcmd('name', type=str, help='Name of the Grafana instance')
+    @arg_botcmd('--link-regex-find', type=str, default=None, help='Find string for link regex. Useful if DNS name needs massaging.')
+    @arg_botcmd('--link-regex-replace', type=str, default=None, help='Replace string for link regex replacement.')
     @arg_botcmd('--room', type=str, default=None, help='Defines the room in which the alerts should be posted. Defaults to the current room')
     @arg_botcmd('--show-images', type=bool, default=True)
-    def grafana_add(self, mess, name, url=None, room=None, show_images=True):
+    def grafana_add(self, mess, name, room=None, show_images=True, link_regex_find=None, link_regex_replace=None):
 
         if not name:
-            return "You need to set at leat a name..."
+            return "You need to set at least a name..."
         elif name in self['INSTANCES']:
             # instance already exists
             return "{name} already exists as Grafana instance.".format(name=name)
@@ -109,9 +105,10 @@ class ErrGrafanaAlert(BotPlugin):
         instance = {
                 'name': name,
                 'token': self._generate_token(),
-                'url': url,
                 'show_images': True if show_images is True else False,
                 'room': room if room else str(mess.to),
+                'link_regex_find': link_regex_find,
+                'link_regex_replace': link_regex_replace
                 }
 
         with self.mutable('INSTANCES') as instances:
@@ -134,33 +131,6 @@ class ErrGrafanaAlert(BotPlugin):
             yield "{name} in {room} -> {token}".format(**instance)
 
     @arg_botcmd('name', type=str, help='name of the Grafana instance')
-    @arg_botcmd('--url', type=str, default=None, help='Optional URL to the Grafana instance. Used for additional security check')
-    @arg_botcmd('--show-images', type=bool, default=True)
-    def grafana_update(self, mess, name, url=None, show_images=None):
-
-        if not name:
-            return "You need to specify a name of the Grafana instance you want to update."
-        elif name not in self['INSTANCES']:
-            return "{name} does not exists as Grafana instance".format(name=name)
-
-        instance = self['INSTANCES'][name]
-        if url:
-            instance['url'] = url
-        if show_images is not None:
-            instance['show_images'] = show_images
-
-        with self.mutable('INSTANCES') as instances:
-            instances[name] = instance
-
-        self.send(
-                self.build_identifier(instance['room']),
-                "Successfully update Grafana instance {name}".format(name=name),
-                )
-
-        return "Updated Grafana instance {name} for {room}".format(name=name, room=instance['room'])
-        pass
-
-    @arg_botcmd('name', type=str, help='name of the Grafana instance')
     def grafana_delete(self, mess, name):
 
         if not name:
@@ -180,13 +150,15 @@ class ErrGrafanaAlert(BotPlugin):
         return "Deleted Grafana instance {name} for {room}".format(name=name, room=room)
 
     def _generate_token(self, length=None):
+        _TOKEN_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
+
         if not length:
-            length = self.config.get('TOKEN_LENGTH', 128)
+            length = self.config.get('TOKEN_LENGTH', 48)
 
         rand = random.SystemRandom()
         token = []
         for i in range(0, length):
-            token.append(self._TOKEN_ALPHABET[rand.randint(0, len(self._TOKEN_ALPHABET)-1)])
+            token.append(_TOKEN_ALPHABET[rand.randint(0, len(_TOKEN_ALPHABET)-1)])
 
         return ''.join(token)
 
