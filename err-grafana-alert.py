@@ -56,9 +56,9 @@ class ErrGrafanaAlert(BotPlugin):
     def alert_webhook(self, request, token):
 
         try:
-            self.log.info("Try to find Grafana instance with token {token}".format(token=token))
+            self.log.info("Finding Grafana instance with token {token}".format(token=token))
             instance = self._find_instance_by_token(token)
-            self.log.info("Found Grafana instance {name} via {token}".format(name=instance['name'], token=token))
+            self.log.info("Found Grafana instance {name} with {token}".format(name=instance['name'], token=token))
         except KeyError:
             self.log.exception()
             bottle.abort(403, "Forbidden")
@@ -70,7 +70,7 @@ class ErrGrafanaAlert(BotPlugin):
                 if instance['link_regex_find']:
                     link = link.replace(instance['link_regex_find'], instance['link_regex_replace'])
 
-                yield "webhook img URL {url}".format(url=request.json.get('imageUrl', None))
+                self.log.info("webhook img URL {url}".format(url=request.json.get('imageUrl', None)))
 
                 self.send_card(
                     to=self.build_identifier(instance['room']),
