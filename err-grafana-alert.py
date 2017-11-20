@@ -125,6 +125,9 @@ class ErrGrafanaAlert(BotPlugin):
 
     @botcmd
     def grafana_list(self, mess, args):
+        """
+        List instances
+        """
         yield "{count} Grafana instances found".format(count=len(self['INSTANCES']))
 
         for name, instance in self['INSTANCES'].items():
