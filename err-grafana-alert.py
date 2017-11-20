@@ -70,6 +70,7 @@ class ErrGrafanaAlert(BotPlugin):
                 if instance['link_regex_find']:
                     link = link.replace(instance['link_regex_find'], instance['link_regex_replace'])
 
+                self.log.info("webhook json: {json}".format(json=request.json))
                 self.log.info("webhook img URL {url}".format(url=request.json.get('imageUrl', None)))
 
                 self.send_card(
